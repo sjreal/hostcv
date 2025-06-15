@@ -34,13 +34,16 @@ Built using **FastAPI (backend)** and **React (frontend)**.
 
 ## 📁 Project Structure
 
+```text
 📦 project-root
 ├── backend/
-│ ├── main.py # FastAPI app
-│ └── requirements.txt
+│   ├── main.py               # FastAPI app
+│   └── requirements.txt
 └── frontend/
-└── src/
-└── components/FileUpload.jsx
+    └── src/
+        └── components/
+            └── FileUpload.jsx
+
 
 ---
 
