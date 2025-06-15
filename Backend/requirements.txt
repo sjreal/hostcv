@@ -1,0 +1,4 @@
+ipykernel
+fastapi
+uvicorn
+python-multipart
