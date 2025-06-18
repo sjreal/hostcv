@@ -65,9 +65,6 @@ python-docx
 
 
 ✅ Frontend Setup
-bash
-Copy
-Edit
 cd frontend
 npm install
 npm run dev
