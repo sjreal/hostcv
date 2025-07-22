@@ -1,18 +1,10 @@
 [project]
-<<<<<<< Updated upstream
-name = "ps2-new"
-=======
 name = "backend"
->>>>>>> Stashed changes
 version = "0.1.0"
 description = "Add your description here"
 readme = "README.md"
 requires-python = ">=3.12"
 dependencies = [
-<<<<<<< Updated upstream
-    "pymupdf>=1.26.1",
-    "requests>=2.32.4",
-=======
     "fastapi>=0.116.1",
     "groq>=0.30.0",
     "nltk>=3.9.1",
@@ -24,5 +16,4 @@ dependencies = [
     "scikit-learn>=1.7.0",
     "sentence-transformers>=5.0.0",
     "uvicorn>=0.35.0",
->>>>>>> Stashed changes
 ]
