@@ -54,7 +54,9 @@ cd backend
 conda create -p venv python==3.12
 conda activate venv or conda activate ./venv
 pip install -r requirements.txt
-uvicorn main:app --reload
+// uvicorn main:app --reload
+uvicorn app.main:app --reload --host 0.0.0.0 --port 8000
+
 
 **Ensure these are in requirements.txt:
 fastapi
