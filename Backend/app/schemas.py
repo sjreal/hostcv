@@ -1,4 +1,4 @@
-from pydantic import BaseModel, Field
+from pydantic import BaseModel, Field, root_validator
 from typing import Dict, List, Any, Tuple, Optional, Union
 
 class CompanyProfile(BaseModel):
@@ -30,13 +30,26 @@ class AgeFilter(BaseModel):
     min_age: Optional[int] = None
     max_age: Optional[int] = None
 
+    @root_validator(pre=True)
+    def coerce_non_int_to_none(cls, values):
+        for field in ['min_age', 'max_age']:
+            val = values.get(field)
+            if isinstance(val, str):
+                if not val.isdigit():
+                    values[field] = None
+                else:
+                    values[field] = int(val)
+            elif not (val is None or isinstance(val, int)):
+                values[field] = None
+        return values
+
 class JDModel(BaseModel):
     jobId: Optional[str] = None
     jobTitle: str
     companyProfile: CompanyProfile
     location: LocationModel
     datePosted: str
-    employmentType: str
+    employmentType: Optional[str] = None
     jobSummary: str
     keyResponsibilities: List[str]
     qualifications: Qualifications
@@ -110,7 +123,7 @@ class Analytics(BaseModel):
     suggested_role: str
 
 class CVModel(BaseModel):
-    UUID: str
+    UUID: Optional[str] = None
     Personal_Data: PersonalData = Field(alias="Personal Data")
     education_list: List[Education] = Field(alias="Education", default=[])
     experiences_list: List[Experience] = Field(alias="Experiences", default=[])

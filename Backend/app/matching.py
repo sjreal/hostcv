@@ -400,8 +400,6 @@ def generate_match_summary(details: Dict) -> str:
     strengths = []
     if details['experience_suitability'] > 0.8:
         strengths.append(f"Strong experience fit ({details['candidate_exp_years']} yrs vs req {details['required_exp_years']} yrs)")
-    if details['skills_similarity'] > 0.85:
-        strengths.append("Excellent skills alignment")
     if details['role_relevance'] > 0.8:
         strengths.append("Highly relevant background")
     
@@ -441,21 +439,19 @@ def compute_similarity(jd: JDModel, cv: CVModel) -> Tuple[float, Dict]:
     experience_match = calculate_experience_match(cv_experience_years, jd_required_years, role_relevance)
     education_match = calculate_education_match(cv.education_list, jd.educationRequired)
     location_match = calculate_location_match(cv.Personal_Data.location, jd.location)
-    skills_match = calculate_skills_match(jd.requiredSkills, cv.skills_list)
     
     final_score = (
         0.23 * sim_title +
         0.31 * sim_resp +
         0.23 * experience_match +
-        0.15 * skills_match +
-        0.08 * education_match
+        0.23 * education_match +
+        0.0 * location_match
     )
     
     details = {
         "job_title_similarity": round(float(sim_title), 4),
         "responsibilities_similarity": round(float(sim_resp), 4),
         "experience_suitability": round(float(experience_match), 4),
-        "skills_similarity": round(float(skills_match), 4),
         "education_relevance": round(float(education_match), 4),
         "location_compatibility": round(float(location_match), 4),
         "role_relevance": round(float(role_relevance), 4),
@@ -464,7 +460,6 @@ def compute_similarity(jd: JDModel, cv: CVModel) -> Tuple[float, Dict]:
         "suggested_role": suggested_role,
         "match_summary": generate_match_summary({
             "experience_suitability": experience_match,
-            "skills_similarity": skills_match,
             "education_relevance": education_match,
             "location_compatibility": location_match,
             "role_relevance": role_relevance,

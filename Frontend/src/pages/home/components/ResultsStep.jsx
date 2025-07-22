@@ -36,7 +36,6 @@ const ResultsStep = ({ finalResults, expandedIdx, setExpandedIdx, skillCategorie
               <th className="px-4 py-2 text-left">Title Sim.</th>
               <th className="px-4 py-2 text-left">Resp. Sim.</th>
               <th className="px-4 py-2 text-left">Exp. Match</th>
-              <th className="px-4 py-2 text-left">Skill Match</th>
               <th className="px-4 py-2 text-left">Edu. Match</th>
             <th className="px-4 py-2 text-left">More Details</th>
           </tr>
@@ -71,7 +70,6 @@ const ResultsStep = ({ finalResults, expandedIdx, setExpandedIdx, skillCategorie
                     <td className="px-4 py-2 whitespace-nowrap">{(candidate.match_details?.job_title_similarity * 100)?.toFixed(1)}%</td>
                     <td className="px-4 py-2 whitespace-nowrap">{(candidate.match_details?.responsibilities_similarity * 100)?.toFixed(1)}%</td>
                     <td className="px-4 py-2 whitespace-nowrap">{(candidate.match_details?.experience_suitability * 100)?.toFixed(1)}%</td>
-                    <td className="px-4 py-2 whitespace-nowrap">{(candidate.match_details?.skills_similarity * 100)?.toFixed(1)}%</td>
                     <td className="px-4 py-2 whitespace-nowrap">{(candidate.match_details?.education_relevance * 100)?.toFixed(1)}%</td>
                 <td className="px-4 py-2">
                   <button
@@ -160,7 +158,6 @@ const ResultsStep = ({ finalResults, expandedIdx, setExpandedIdx, skillCategorie
                               <li><b>Job Title Similarity:</b> {(candidate.match_details?.job_title_similarity * 100)?.toFixed(2)}%</li>
                               <li><b>Responsibilities Similarity:</b> {(candidate.match_details?.responsibilities_similarity * 100)?.toFixed(2)}%</li>
                               <li><b>Experience Suitability:</b> {(candidate.match_details?.experience_suitability * 100)?.toFixed(2)}%</li>
-                              <li><b>Skills Similarity:</b> {(candidate.match_details?.skills_similarity * 100)?.toFixed(2)}%</li>
                               <li><b>Education Relevance:</b> {(candidate.match_details?.education_relevance * 100)?.toFixed(2)}%</li>
                               <li><b>Location Compatibility:</b> {(candidate.match_details?.location_compatibility * 100)?.toFixed(2)}%</li>
                               <li><b>Role Relevance:</b> {(candidate.match_details?.role_relevance * 100)?.toFixed(2)}%</li>
