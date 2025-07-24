@@ -215,6 +215,7 @@ IMPORTANT INSTRUCTIONS:
 - Normalize common abbreviations and synonyms (e.g., 'HR' ↔ 'Human Resources', 'CS' ↔ 'Computer Science', 'IT' ↔ 'Information Technology', 'Mgmt' ↔ 'Management').
 - If no field can be determined, set fieldOfStudy to null.
 - Extract age and gender if available.
+- For the fields "age_filter.min_age", "age_filter.max_age", "Analytics.education_gap.gap_duration_years" only use an integer value or null. Do not use strings like "Unknown", "N/A", or any non-integer value. If the value is not specified or not a number, set it to null.
 - Do not make up or infer information that is not explicitly stated.
 {skill_presence_instruction}
 Schema:

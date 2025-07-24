@@ -123,6 +123,18 @@ class PersonalData(BaseModel):
     age: Optional[int] = None
     gender: Optional[str] = None
 
+    @root_validator(pre=True)
+    def coerce_non_int_age_to_none(cls, values):
+        age = values.get('age')
+        if isinstance(age, str):
+            if not age.isdigit():
+                values['age'] = None
+            else:
+                values['age'] = int(age)
+        elif not (age is None or isinstance(age, int)):
+            values['age'] = None
+        return values
+
 class Education(BaseModel):
     institution: Optional[str] = None
     degree: Optional[str] = None
@@ -159,7 +171,7 @@ class JobStability(BaseModel):
 
 class EducationGap(BaseModel):
     has_gap: bool = False
-    gap_duration_years: float = 0
+    gap_duration_years: Optional[float] = 0
 
 class KeywordAnalysis(BaseModel):
     teamwork: bool = False
