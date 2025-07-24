@@ -1,5 +1,5 @@
 import React, { useState, useCallback } from 'react';
-import { Brain, Zap, Target } from 'lucide-react';
+import { Brain, Zap, Target, Clock } from 'lucide-react';
 import axios from 'axios';
 
 import Stepper from '../../components/ui/Stepper';
@@ -9,6 +9,7 @@ import UploadStep from './components/UploadStep';
 import ReviewJdStep from './components/ReviewJdStep';
 import ReviewResumesStep from './components/ReviewResumesStep';
 import ResultsStep from './components/ResultsStep';
+import PastAnalyses from './components/PastAnalyses';
 
 const defaultSkillCategories = (skills = []) => ({
   critical: skills,
@@ -30,6 +31,7 @@ const JDCVMatcher = () => {
   const [newSkill, setNewSkill] = useState("");
   const [showJsonView, setShowJsonView] = useState(false);
   const [editingCvIndex, setEditingCvIndex] = useState(null);
+  const [view, setView] = useState('main'); // 'main' or 'past'
 
   // --- File Handlers ---
   const handleDrop = useCallback((e, type) => {
@@ -122,11 +124,9 @@ const JDCVMatcher = () => {
     if (!editedJdJson || !files.cv || files.cv.length === 0) return;
     setProcessing(true);
     setStep(4);
-    // Merge skillCategories into editedJdJson
     const jdWithCategories = {
       ...editedJdJson,
-      requiredSkills: skillCategories, // keep categories for backend LLM
-      skillCategories // for frontend display (optional)
+      requiredSkills: skillCategories,
     };
     const formData = new FormData();
     formData.append('jd_json', JSON.stringify(jdWithCategories));
@@ -155,16 +155,13 @@ const JDCVMatcher = () => {
     if (!editedJdJson || !cvExtractionResults) return;
     setProcessing(true);
     setStep(6);
-    // Flatten requiredSkills for backend matching, but keep categories for display
-    const flatSkills = [
-      ...skillCategories.critical,
-      ...skillCategories.important,
-      ...skillCategories.extra
-    ];
-    const jdWithCategories = {
+    const jdWithFlatSkills = {
       ...editedJdJson,
-      requiredSkills: flatSkills,
-      skillCategories // for frontend display (optional)
+      requiredSkills: [
+        ...skillCategories.critical,
+        ...skillCategories.important,
+        ...skillCategories.extra
+      ],
     };
     const localApi = import.meta.env.VITE_API_URL;
     const networkApi = import.meta.env.VITE_API_URL_NETWORK;
@@ -172,7 +169,7 @@ const JDCVMatcher = () => {
     const apiUrl = isLocalhost ? localApi : networkApi;
     try {
       const res = await axios.post(`${apiUrl}/match`, {
-        jd_json: jdWithCategories,
+        jd_json: jdWithFlatSkills, // Use the object with flattened skills
         cvs: cvExtractionResults
       });
       setFinalResults(res.data);
@@ -194,45 +191,24 @@ const JDCVMatcher = () => {
     setCvExtractionResults(null);
     setFinalResults(null);
     setProcessing(false);
+    setView('main');
   };
 
   const handleUpdateCv = (index, updatedCv) => {
     const newCvResults = [...cvExtractionResults];
     newCvResults[index].cv_json = updatedCv;
     setCvExtractionResults(newCvResults);
-    setEditingCvIndex(null); // Close modal on save
+    setEditingCvIndex(null);
   };
 
-  // --- UI ---
-  return (
-    <div className="min-h-screen bg-gradient-to-br from-gray-50 via-white to-red-50">
-      <div className="absolute inset-0 bg-gradient-to-br from-red-500/5 via-transparent to-red-500/10"></div>
-      <header className="relative z-10 bg-white shadow-lg border-b border-red-100 sticky top-0 z-50">
-        <div className="max-w-7xl mx-auto px-6 py-4">
-          <div className="flex items-center justify-between">
-            <div className="flex items-center space-x-3">
-              <div className="p-2 bg-gradient-to-r from-red-500 to-red-600 rounded-lg shadow-lg">
-                <Brain className="w-6 h-6 text-white" />
-              </div>
-              <h1 className="text-2xl font-bold text-gray-800">JD-CV Matcher</h1>
-            </div>
-            <div className="flex items-center space-x-4 text-gray-600 text-sm">
-              <div className="flex items-center space-x-1">
-                <Zap className="w-4 h-4 text-red-500" />
-                <span>AI Powered</span>
-              </div>
-              <div className="flex items-center space-x-1">
-                <Target className="w-4 h-4 text-red-500" />
-                <span>Smart Matching</span>
-              </div>
-            </div>
-          </div>
-        </div>
-      </header>
-      <main className="relative z-10 max-w-7xl mx-auto px-6 py-8">
-        <Stepper step={step} />
-        
-        {step === 1 && (
+  const renderContent = () => {
+    if (view === 'past') {
+      return <PastAnalyses />;
+    }
+
+    switch (step) {
+      case 1:
+        return (
           <UploadStep
             files={files}
             dragOver={dragOver}
@@ -243,9 +219,9 @@ const JDCVMatcher = () => {
             extractJD={extractJD}
             processing={processing}
           />
-        )}
-
-        {step === 3 && editedJdJson && (
+        );
+      case 3:
+        return (
           <ReviewJdStep
             editedJdJson={editedJdJson}
             skillCategories={skillCategories}
@@ -261,9 +237,9 @@ const JDCVMatcher = () => {
             resetApp={resetApp}
             processing={processing}
           />
-        )}
-
-        {step === 5 && cvExtractionResults && (
+        );
+      case 5:
+        return (
           <ReviewResumesStep
             cvExtractionResults={cvExtractionResults}
             setEditingCvIndex={setEditingCvIndex}
@@ -271,9 +247,9 @@ const JDCVMatcher = () => {
             resetApp={resetApp}
             processing={processing}
           />
-        )}
-
-        {step === 7 && finalResults && (
+        );
+      case 7:
+        return (
           <ResultsStep
             finalResults={finalResults}
             expandedIdx={expandedIdx}
@@ -281,7 +257,50 @@ const JDCVMatcher = () => {
             skillCategories={skillCategories}
             resetApp={resetApp}
           />
-        )}
+        );
+      default:
+        return null;
+    }
+  };
+
+  return (
+    <div className="min-h-screen bg-gradient-to-br from-gray-50 via-white to-red-50">
+      <div className="absolute inset-0 bg-gradient-to-br from-red-500/5 via-transparent to-red-500/10"></div>
+      <header className="relative z-10 bg-white shadow-lg border-b border-red-100 sticky top-0 z-50">
+        <div className="max-w-7xl mx-auto px-6 py-4">
+          <div className="flex items-center justify-between">
+            <div className="flex items-center space-x-3">
+              <div className="p-2 bg-gradient-to-r from-red-500 to-red-600 rounded-lg shadow-lg">
+                <Brain className="w-6 h-6 text-white" />
+              </div>
+              <h1 className="text-2xl font-bold text-gray-800">JD-CV Matcher</h1>
+            </div>
+            <div className="flex items-center space-x-4">
+              <button 
+                onClick={() => setView(view === 'main' ? 'past' : 'main')}
+                className="flex items-center space-x-2 px-4 py-2 rounded-lg bg-gray-100 hover:bg-gray-200 transition-colors"
+              >
+                <Clock className="w-5 h-5 text-gray-600" />
+                <span className="text-sm font-medium text-gray-700">
+                  {view === 'main' ? 'View Past Analyses' : 'New Analysis'}
+                </span>
+              </button>
+              <div className="flex items-center space-x-1 text-gray-600 text-sm">
+                <Zap className="w-4 h-4 text-red-500" />
+                <span>AI Powered</span>
+              </div>
+              <div className="flex items-center space-x-1 text-gray-600 text-sm">
+                <Target className="w-4 h-4 text-red-500" />
+                <span>Smart Matching</span>
+              </div>
+            </div>
+          </div>
+        </div>
+      </header>
+      <main className="relative z-10 max-w-7xl mx-auto px-6 py-8">
+        {view === 'main' && <Stepper step={step} />}
+        
+        {renderContent()}
 
         {processing && <ProcessingLoader />}
 

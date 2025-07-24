@@ -112,7 +112,8 @@ def clean_resume_json(resume_json):
     if not isinstance(skills, list):
         resume_json["Skills"] = []
     else:
-        resume_json["Skills"] = [s for s in skills if isinstance(s, dict)]
+        # Filter out skills that are not dicts or are missing a truthy 'skillName'
+        resume_json["Skills"] = [s for s in skills if isinstance(s, dict) and s.get("skillName")]
 
     research = resume_json.get("Research Work", [])
     if not isinstance(research, list):

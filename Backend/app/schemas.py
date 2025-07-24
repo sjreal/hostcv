@@ -1,5 +1,56 @@
 from pydantic import BaseModel, Field, root_validator
 from typing import Dict, List, Any, Tuple, Optional, Union
+from datetime import datetime
+
+# Database Schemas
+
+class CandidateBase(BaseModel):
+    email: str
+    name: Optional[str] = None
+    phone: Optional[str] = None
+
+class CandidateCreate(CandidateBase):
+    pass
+
+class Candidate(CandidateBase):
+    id: int
+
+    class Config:
+        orm_mode = True
+
+class AnalysisResultBase(BaseModel):
+    score: float
+    match_level: str
+    details: Dict[str, Any]
+
+class AnalysisResultCreate(AnalysisResultBase):
+    pass
+
+class AnalysisResult(AnalysisResultBase):
+    id: int
+    candidate: Candidate
+
+    class Config:
+        orm_mode = True
+
+class JobDescriptionBase(BaseModel):
+    job_id_str: str
+    job_title: str
+    company_name: Optional[str] = None
+
+class JobDescriptionCreate(JobDescriptionBase):
+    details: Dict[str, Any]
+
+class JobDescription(JobDescriptionBase):
+    id: int
+    created_at: datetime
+    results: List[AnalysisResult] = []
+
+    class Config:
+        orm_mode = True
+
+
+# LLM and Matching Schemas
 
 class CompanyProfile(BaseModel):
     companyName: Optional[str] = None
