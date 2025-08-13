@@ -1,40 +1,43 @@
-from sqlalchemy import Column, Integer, String, Float, JSON, ForeignKey, DateTime
-from sqlalchemy.orm import relationship
-from sqlalchemy.sql import func
-from .database import Base
+from typing import Optional, List, Dict, Any
+from datetime import datetime
+from pydantic import BaseModel
 
-class JobDescription(Base):
-    __tablename__ = "job_descriptions"
+# Pydantic models for Supabase data structures
+class User(BaseModel):
+    id: str  # Supabase uses UUIDs
+    username: str
+    email: str
+    role: str = "recruiter"
+    is_active: bool = True
+    created_at: Optional[datetime] = None
 
-    id = Column(Integer, primary_key=True, index=True)
-    job_id_str = Column(String, index=True, unique=True)
-    job_title = Column(String, index=True)
-    company_name = Column(String)
-    details = Column(JSON)
-    created_at = Column(DateTime(timezone=True), server_default=func.now())
+class JobDescription(BaseModel):
+    id: Optional[int] = None
+    job_id_str: Optional[str] = None
+    content_hash: str
+    job_title: str
+    company_name: Optional[str] = None
+    location: Optional[str] = None
+    ctc: Optional[str] = None
+    status: str = "Active"
+    details: Dict[str, Any] = {}
+    created_at: Optional[datetime] = None
 
-    results = relationship("AnalysisResult", back_populates="job_description")
+class Candidate(BaseModel):
+    id: Optional[int] = None
+    name: str
+    email: str
+    phone: Optional[str] = None
+    assessment_result: Optional[str] = None
+    recruiter_id: Optional[str] = None  # Supabase uses UUIDs
+    uploaded_at: Optional[datetime] = None
 
-class Candidate(Base):
-    __tablename__ = "candidates"
-
-    id = Column(Integer, primary_key=True, index=True)
-    name = Column(String, index=True)
-    email = Column(String, unique=True, index=True)
-    phone = Column(String, nullable=True)
-    
-    results = relationship("AnalysisResult", back_populates="candidate")
-
-class AnalysisResult(Base):
-    __tablename__ = "analysis_results"
-
-    id = Column(Integer, primary_key=True, index=True)
-    job_description_id = Column(Integer, ForeignKey("job_descriptions.id"))
-    candidate_id = Column(Integer, ForeignKey("candidates.id"))
-    
-    score = Column(Float)
-    match_level = Column(String)
-    details = Column(JSON)
-    
-    job_description = relationship("JobDescription", back_populates="results")
-    candidate = relationship("Candidate", back_populates="results")
+class AnalysisResult(BaseModel):
+    id: Optional[int] = None
+    job_description_id: int
+    candidate_id: int
+    user_id: str  # Supabase uses UUIDs
+    score: float
+    match_level: str
+    details: Dict[str, Any] = {}
+    created_at: Optional[datetime] = None

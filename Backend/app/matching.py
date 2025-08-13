@@ -1,19 +1,38 @@
-from sentence_transformers import SentenceTransformer, util
+from sentence_transformers import util
 from sklearn.metrics.pairwise import cosine_similarity
 from datetime import datetime
 import re
+import os
 from typing import Dict, List, Tuple
 from difflib import SequenceMatcher
 import nltk
 from nltk.stem import WordNetLemmatizer
 from nltk.corpus import stopwords
+from dotenv import load_dotenv
 
 from .schemas import JDModel, CVModel, Experience, Education, LocationModel, Skill, Qualifications
 
-lemmatizer = WordNetLemmatizer()
-STOPWORDS = set(stopwords.words('english'))
+# Load environment variables
+load_dotenv()
 
-model = SentenceTransformer('all-mpnet-base-v2')
+# Get weights from environment variables with defaults
+TITLE_WEIGHT = float(os.getenv('MATCHING_TITLE_WEIGHT', 0.23))
+RESPONSIBILITIES_WEIGHT = float(os.getenv('MATCHING_RESPONSIBILITIES_WEIGHT', 0.31))
+EXPERIENCE_WEIGHT = float(os.getenv('MATCHING_EXPERIENCE_WEIGHT', 0.23))
+EDUCATION_WEIGHT = float(os.getenv('MATCHING_EDUCATION_WEIGHT', 0.23))
+LOCATION_WEIGHT = float(os.getenv('MATCHING_LOCATION_WEIGHT', 0.0))
+
+# Get model name from environment variable with default
+SENTENCE_TRANSFORMER_MODEL = os.getenv('SENTENCE_TRANSFORMER_MODEL', 'all-mpnet-base-v2')
+
+_model = None
+
+def get_model():
+    global _model
+    if _model is None:
+        from sentence_transformers import SentenceTransformer
+        _model = SentenceTransformer(SENTENCE_TRANSFORMER_MODEL)
+    return _model
 
 CITY_VARIATIONS = {
     'gurgaon': ['gurugram', 'gurgaon'],
@@ -70,7 +89,7 @@ def calculate_experience_years(experiences: List[Experience]) -> float:
             continue
     return round(max(0, total_days / 365), 1)
 
-def extract_required_experience(qualifications: Qualifications) -> float:
+def extract_required_experience(qualifications: Qualifications, model) -> float:
     if not qualifications or not qualifications.required:
         return 0.0
 
@@ -106,7 +125,7 @@ def extract_required_experience(qualifications: Qualifications) -> float:
 
     return 0.0
 
-def calculate_role_relevance(jd_title: str, cv_suggested_role: str, cv_experiences: List[Experience]) -> float:
+def calculate_role_relevance(jd_title: str, cv_suggested_role: str, cv_experiences: List[Experience], model) -> float:
     if cv_suggested_role:
         jd_emb = model.encode(jd_title.lower())
         suggested_role_emb = model.encode(cv_suggested_role.lower())
@@ -246,14 +265,14 @@ def extract_field(text: str) -> str:
     
     return cleaned if cleaned else ""
 
-def calculate_field_similarity(cv_field: str, jd_text: str) -> float:
+def calculate_field_similarity(cv_field: str, jd_text: str, model) -> float:
     if not cv_field or not jd_text:
         return 0.0
     cv_embed = model.encode([cv_field], convert_to_tensor=True)
     jd_embed = model.encode([jd_text], convert_to_tensor=True)
     return util.cos_sim(cv_embed, jd_embed).item()
 
-def calculate_education_match(cv_education: list[Education], jd_education: list[str]) -> float:
+def calculate_education_match(cv_education: list[Education], jd_education: list[str], model) -> float:
     if not jd_education:
         return 1.0
     if not cv_education:
@@ -303,7 +322,7 @@ def calculate_education_match(cv_education: list[Education], jd_education: list[
                 if jd_req["field"] == cv_entry["field"]:
                     field_bonus = 0.3
                 else:
-                    field_sim = calculate_field_similarity(cv_entry["field"], jd_req["field"])
+                    field_sim = calculate_field_similarity(cv_entry["field"], jd_req["field"], model)
                     field_bonus = 0.2 * field_sim
             total_score = min(1.0, base_score + level_bonus + field_bonus)
             if total_score > best_match_score:
@@ -339,6 +358,7 @@ def calculate_location_match(cv_location: LocationModel, jd_location: LocationMo
     return 0.3
 
 def calculate_skills_match(jd_required_skills: List[str], cv_skills: List[Skill]) -> float:
+    model = get_model()
     if not jd_required_skills:
         return 0.7
     
@@ -420,14 +440,15 @@ def generate_match_summary(details: Dict) -> str:
     return summary or "No significant strengths or concerns identified"
 
 def compute_similarity(jd: JDModel, cv: CVModel) -> Tuple[float, Dict]:
+    model = get_model()
     suggested_role = cv.Analytics.suggested_role
     
-    role_relevance = calculate_role_relevance(jd.jobTitle, suggested_role, cv.experiences_list)
+    role_relevance = calculate_role_relevance(jd.jobTitle, suggested_role, cv.experiences_list, model)
     
     jd_title_emb = model.encode(jd.jobTitle)
     
     cv_experience_years = calculate_experience_years(cv.experiences_list)
-    jd_required_years = extract_required_experience(jd.qualifications)
+    jd_required_years = extract_required_experience(jd.qualifications, model)
     
     cv_title_text = suggested_role if suggested_role else " ".join([exp.jobTitle for exp in cv.experiences_list if exp.jobTitle])
     
@@ -437,15 +458,15 @@ def compute_similarity(jd: JDModel, cv: CVModel) -> Tuple[float, Dict]:
     sim_resp = calculate_combined_sim_resp(jd.keyResponsibilities, cv.experiences_list, model)
     
     experience_match = calculate_experience_match(cv_experience_years, jd_required_years, role_relevance)
-    education_match = calculate_education_match(cv.education_list, jd.educationRequired)
+    education_match = calculate_education_match(cv.education_list, jd.educationRequired, model)
     location_match = calculate_location_match(cv.Personal_Data.location, jd.location)
     
     final_score = (
-        0.23 * sim_title +
-        0.31 * sim_resp +
-        0.23 * experience_match +
-        0.23 * education_match +
-        0.0 * location_match
+        TITLE_WEIGHT * sim_title +
+        RESPONSIBILITIES_WEIGHT * sim_resp +
+        EXPERIENCE_WEIGHT * experience_match +
+        EDUCATION_WEIGHT * education_match +
+        LOCATION_WEIGHT * location_match
     )
     
     details = {

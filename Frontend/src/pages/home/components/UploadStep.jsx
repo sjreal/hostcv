@@ -1,11 +1,11 @@
 import React from 'react';
-import { Upload, FileText, CheckCircle } from 'lucide-react';
+import { Upload, FileText, CheckCircle, X } from 'lucide-react';
 
-const UploadStep = ({ files, dragOver, handleDrop, handleDragOver, handleDragLeave, handleFileSelect, extractJD, processing }) => (
+const UploadStep = ({ files, dragOver, handleDrop, handleDragOver, handleDragLeave, handleFileSelect, handleRemoveFile, extractJD, processing }) => (
   <div className="space-y-8">
     <div className="text-center mb-8">
       <h2 className="text-3xl font-bold text-gray-800 mb-4">Upload Your Documents</h2>
-      <p className="text-gray-600 text-lg">Upload both Job Description and one or more Resumes to get started</p>
+      <p className="text-gray-600 text-lg">Upload a Job Description to get started. You can upload resumes now or later.</p>
     </div>
     <div className="grid md:grid-cols-2 gap-8">
       <div className="bg-white rounded-2xl p-8 shadow-lg border border-red-100">
@@ -29,7 +29,12 @@ const UploadStep = ({ files, dragOver, handleDrop, handleDragOver, handleDragLea
           {files.jd ? (
             <div className="text-green-600">
               <CheckCircle className="w-8 h-8 mx-auto mb-2" />
-              <p className="font-medium text-gray-800">{files.jd.name}</p>
+              <div className="flex items-center justify-center">
+                <p className="font-medium text-gray-800">{files.jd.name}</p>
+                <button onClick={() => handleRemoveFile('jd')} className="ml-2 text-red-500 hover:text-red-700 p-1 rounded-full bg-red-100 hover:bg-red-200">
+                  <X className="w-4 h-4" />
+                </button>
+              </div>
               <p className="text-sm text-gray-500 mt-1">Ready to extract</p>
             </div>
           ) : (
@@ -76,7 +81,12 @@ const UploadStep = ({ files, dragOver, handleDrop, handleDragOver, handleDragLea
               <CheckCircle className="w-8 h-8 mx-auto mb-2" />
               <ul className="text-gray-800">
                 {files.cv.map((file, idx) => (
-                  <li key={idx}>{file.name}</li>
+                  <li key={idx} className="flex items-center justify-center">
+                    <span>{file.name}</span>
+                    <button onClick={() => handleRemoveFile('cv', idx)} className="ml-2 text-red-500 hover:text-red-700 p-1 rounded-full bg-red-100 hover:bg-red-200">
+                      <X className="w-4 h-4" />
+                    </button>
+                  </li>
                 ))}
               </ul>
               <p className="text-sm text-gray-500 mt-1">Ready to extract</p>
@@ -104,7 +114,7 @@ const UploadStep = ({ files, dragOver, handleDrop, handleDragOver, handleDragLea
         </div>
       </div>
     </div>
-    {files.jd && files.cv && files.cv.length > 0 && (
+    {files.jd && (
       <div className="text-center">
         <button
           onClick={extractJD}
@@ -112,7 +122,7 @@ const UploadStep = ({ files, dragOver, handleDrop, handleDragOver, handleDragLea
           disabled={processing}
         >
           <FileText className="w-5 h-5 inline mr-2" />
-          Extract JD
+          {files.cv.length > 0 ? 'Extract JD & Resumes' : 'Extract JD'}
         </button>
       </div>
     )}

@@ -14,9 +14,14 @@ const ReviewJdStep = ({
   setNewSkill,
   setShowJsonView,
   extractResumes,
+  saveJd,
   resetApp,
-  processing
-}) => (
+  processing,
+  user
+}) => {
+  const hasCvFiles = user?.role !== 'recruiter'; // Simplified logic, adjust as needed
+
+  return (
   <div className="space-y-8">
     <div className="text-center mb-8">
       <h2 className="text-3xl font-bold text-gray-800 mb-4">Review & Categorize JD Skills</h2>
@@ -98,12 +103,21 @@ const ReviewJdStep = ({
     <div className="text-center flex gap-4 justify-center">
       <button
         onClick={extractResumes}
-        disabled={processing}
-        className="px-8 py-4 bg-gradient-to-r from-red-500 to-red-600 text-white font-semibold rounded-xl hover:from-red-600 hover:to-red-700 transition-all duration-300 shadow-lg hover:shadow-xl transform hover:scale-105"
+        disabled={processing || !hasCvFiles}
+        className="px-8 py-4 bg-gradient-to-r from-red-500 to-red-600 text-white font-semibold rounded-xl hover:from-red-600 hover:to-red-700 transition-all duration-300 shadow-lg hover:shadow-xl transform hover:scale-105 disabled:opacity-50 disabled:cursor-not-allowed"
       >
         <FileText className="w-5 h-5 inline mr-2" />
         Extract Resumes
       </button>
+      {(user?.role === 'admin' || user?.role === 'backend_team') && (
+        <button
+          onClick={saveJd}
+          disabled={processing}
+          className="px-8 py-4 bg-blue-500 text-white font-semibold rounded-xl hover:bg-blue-600 transition-all duration-300 shadow-lg hover:shadow-xl transform hover:scale-105"
+        >
+          Save JD
+        </button>
+      )}
       <button
         onClick={resetApp}
         className="px-8 py-4 bg-gray-200 text-gray-700 font-semibold rounded-xl hover:bg-gray-300 transition-all duration-300 shadow-lg hover:shadow-xl transform hover:scale-105"
@@ -112,6 +126,6 @@ const ReviewJdStep = ({
       </button>
     </div>
   </div>
-);
+)};
 
 export default ReviewJdStep;

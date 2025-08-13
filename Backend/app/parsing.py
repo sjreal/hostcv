@@ -1,7 +1,22 @@
 import os
 import re
 import json
+import logging
 from pathlib import Path
+from typing import Any
+
+# Configure logging
+logging.basicConfig(level=logging.INFO)
+logger = logging.getLogger(__name__)
+
+def to_bool(value: Any) -> bool:
+    if isinstance(value, bool):
+        return value
+    if isinstance(value, str):
+        return value.lower() in ['true', '1', 'yes', 'present']
+    if isinstance(value, (int, float)):
+        return bool(value)
+    return False
 
 def extract_text_from_file(file_path):
     ext = os.path.splitext(file_path)[1].lower()
@@ -21,10 +36,11 @@ def extract_text_from_file(file_path):
                     text += page.extract_text() or ""
             return text
         else:
-            raise ValueError(f"Unsupported file type: {ext}")
+            logger.warning(f"Unsupported file type: {ext} for file {file_path}")
+            return None
     except Exception as e:
-        print(f"❌ Error extracting text from {file_path}: {e}")
-        raise
+        logger.error(f"Error extracting text from {file_path}: {e}")
+        return None
 
 def preprocess_resume_text(text: str) -> str:
     text = re.sub(r'\s+', ' ', text)
@@ -152,15 +168,7 @@ def clean_resume_json(resume_json):
         cleaned_skill_presence = {}
         for skill, value in skill_presence.items():
             if isinstance(skill, str):
-                # Convert value to boolean
-                if isinstance(value, bool):
-                    cleaned_skill_presence[skill] = value
-                elif isinstance(value, str):
-                    cleaned_skill_presence[skill] = value.lower() in ['true', '1', 'yes', 'present']
-                elif isinstance(value, (int, float)):
-                    cleaned_skill_presence[skill] = bool(value)
-                else:
-                    cleaned_skill_presence[skill] = False
+                cleaned_skill_presence[skill] = to_bool(value)
         resume_json["skill_presence"] = cleaned_skill_presence
     else:
         resume_json["skill_presence"] = {}

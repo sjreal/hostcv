@@ -1,15 +1,19 @@
-import React, { useState, useCallback } from 'react';
-import { Brain, Zap, Target, Clock } from 'lucide-react';
-import axios from 'axios';
+import React, { useState, useCallback, useEffect } from 'react';
+import { Link } from 'react-router-dom';
+import { Brain, Zap, Target, Clock, Briefcase, LogOut, Users } from 'lucide-react';
+import api from '../api';
+import useAuth from '../hooks/useAuth';
 
-import Stepper from '../../components/ui/Stepper';
-import ProcessingLoader from '../../components/ui/ProcessingLoader';
-import CvFormEditor from '../../components/CvFormEditor';
-import UploadStep from './components/UploadStep';
-import ReviewJdStep from './components/ReviewJdStep';
-import ReviewResumesStep from './components/ReviewResumesStep';
-import ResultsStep from './components/ResultsStep';
-import PastAnalyses from './components/PastAnalyses';
+import Stepper from '../components/ui/Stepper';
+import ProcessingLoader from '../components/ui/ProcessingLoader';
+import CvFormEditor from '../components/CvFormEditor';
+import UploadStep from './home/components/UploadStep';
+import ReviewJdStep from './home/components/ReviewJdStep';
+import ReviewResumesStep from './home/components/ReviewResumesStep';
+import ResultsStep from './home/components/ResultsStep';
+import PastAnalyses from './home/components/PastAnalyses';
+import SelectJdStep from './home/components/SelectJdStep';
+import UploadCvForJdStep from './home/components/UploadCvForJdStep';
 
 const defaultSkillCategories = (skills = []) => ({
   critical: skills,
@@ -17,7 +21,8 @@ const defaultSkillCategories = (skills = []) => ({
   extra: []
 });
 
-const JDCVMatcher = () => {
+const JDCVMatcher = ({ isPastAnalysesPage }) => {
+  const { user, logout } = useAuth();
   const [step, setStep] = useState(1);
   const [files, setFiles] = useState({ jd: null, cv: [] });
   const [processing, setProcessing] = useState(false);
@@ -31,7 +36,52 @@ const JDCVMatcher = () => {
   const [newSkill, setNewSkill] = useState("");
   const [showJsonView, setShowJsonView] = useState(false);
   const [editingCvIndex, setEditingCvIndex] = useState(null);
-  const [view, setView] = useState('main'); // 'main' or 'past'
+  const [view, setView] = useState(isPastAnalysesPage ? 'past' : 'main');
+
+  // New state for recruiter flow
+  const [jds, setJds] = useState([]);
+  const [selectedJd, setSelectedJd] = useState(null);
+
+  useEffect(() => {
+    setView(isPastAnalysesPage ? 'past' : 'main');
+  }, [isPastAnalysesPage]);
+
+  useEffect(() => {
+    if (user?.role === 'recruiter') {
+      const fetchJds = async () => {
+        setProcessing(true);
+        try {
+          const response = await api.get('/jds');
+          setJds(response.data.filter(jd => jd.status === 'Active'));
+        } catch (err) {
+          alert('Failed to fetch job descriptions.');
+        } finally {
+          setProcessing(false);
+        }
+      };
+      fetchJds();
+    }
+  }, [user]);
+
+  const handleBack = () => {
+    setStep(prev => {
+      if (user?.role === 'recruiter') {
+        if (prev === 6) return 4;
+        if (prev === 4) return 2;
+        if (prev === 2) return 1;
+        return 1;
+      } else { // Admin / Backend Team
+        if (prev === 7) return 5;
+        if (prev === 5) return 3;
+        if (prev === 3) return 1;
+        return 1;
+      }
+    });
+  };
+
+  const handleNext = () => {
+    setStep(prev => prev + 1);
+  };
 
   // --- File Handlers ---
   const handleDrop = useCallback((e, type) => {
@@ -40,7 +90,7 @@ const JDCVMatcher = () => {
     const droppedFiles = Array.from(e.dataTransfer.files);
     if (droppedFiles.length > 0) {
         if (type === 'cv') {
-          setFiles(prev => ({ ...prev, [type]: droppedFiles }));
+          setFiles(prev => ({ ...prev, cv: droppedFiles }));
         } else {
           setFiles(prev => ({ ...prev, [type]: droppedFiles[0] }));
         }
@@ -57,12 +107,50 @@ const JDCVMatcher = () => {
     setDragOver({ ...dragOver, [type]: false });
   }, [dragOver]);
 
+  const handleRemoveFile = (type, index = null) => {
+    setFiles(prev => {
+      const newFiles = { ...prev };
+      if (type === 'jd') {
+        newFiles.jd = null;
+      } else if (type === 'cv') {
+        if (index !== null) {
+          newFiles.cv.splice(index, 1);
+        } else {
+          newFiles.cv = [];
+        }
+      }
+      return newFiles;
+    });
+  };
+
  const handleFileSelect = (e, type) => {
     const selectedFiles = Array.from(e.target.files);
     if (type === 'cv') {
-      setFiles(prev => ({ ...prev, [type]: selectedFiles }));
+      setFiles(prev => ({ ...prev, cv: selectedFiles }));
     } else {
       setFiles(prev => ({ ...prev, [type]: selectedFiles[0] }));
+    }
+  };
+
+  const handleSelectJd = (jd) => {
+    setSelectedJd(jd);
+    const details = jd.details || {};
+    setJdJson(details);
+    setEditedJdJson(details);
+    setSkillCategories(defaultSkillCategories(details.requiredSkills || []));
+    setStep(2); // Move to CV upload step for recruiter
+  };
+
+  const saveJd = async () => {
+    if (!editedJdJson) return;
+    setProcessing(true);
+    try {
+      await api.post(`/save_jd`, editedJdJson);
+      alert('Job Description saved successfully!');
+      resetApp();
+    } catch (err) {
+      setProcessing(false);
+      alert('Error saving JD: ' + (err.response?.data?.error || err.message));
     }
   };
 
@@ -73,12 +161,8 @@ const JDCVMatcher = () => {
     setStep(2);
     const formData = new FormData();
     formData.append('jd_file', files.jd);
-    const localApi = import.meta.env.VITE_API_URL;
-    const networkApi = import.meta.env.VITE_API_URL_NETWORK;
-    const isLocalhost = window.location.hostname === "localhost" || window.location.hostname === "127.0.0.1";
-    const apiUrl = isLocalhost ? localApi : networkApi;
     try {
-      const res = await axios.post(`${apiUrl}/extract_jd`, formData, {
+      const res = await api.post(`/extract_jd`, formData, {
         headers: { 'Content-Type': 'multipart/form-data' }
       });
       setJdJson(res.data);
@@ -121,29 +205,28 @@ const JDCVMatcher = () => {
 
   // --- Step 4: Extract Resumes ---
   const extractResumes = async () => {
-    if (!editedJdJson || !files.cv || files.cv.length === 0) return;
+    const cvFiles = files.cv;
+    if (!editedJdJson || !cvFiles || cvFiles.length === 0) return;
+    
     setProcessing(true);
-    setStep(4);
+    setStep(user?.role === 'recruiter' ? 3 : 4);
+
     const jdWithCategories = {
       ...editedJdJson,
       requiredSkills: skillCategories,
     };
     const formData = new FormData();
     formData.append('jd_json', JSON.stringify(jdWithCategories));
-    for (let i = 0; i < files.cv.length; i++) {
-      formData.append('resume_files', files.cv[i]);
+    for (let i = 0; i < cvFiles.length; i++) {
+      formData.append('resume_files', cvFiles[i]);
     }
-    const localApi = import.meta.env.VITE_API_URL;
-    const networkApi = import.meta.env.VITE_API_URL_NETWORK;
-    const isLocalhost = window.location.hostname === "localhost" || window.location.hostname === "127.0.0.1";
-    const apiUrl = isLocalhost ? localApi : networkApi;
     try {
-      const res = await axios.post(`${apiUrl}/extract_resumes`, formData, {
+      const res = await api.post(`/extract_resumes`, formData, {
         headers: { 'Content-Type': 'multipart/form-data' }
       });
       setCvExtractionResults(res.data);
       setProcessing(false);
-      setStep(5);
+      setStep(user?.role === 'recruiter' ? 4 : 5);
     } catch (err) {
       setProcessing(false);
       alert('Error extracting resumes: ' + (err.response?.data?.error || err.message));
@@ -154,7 +237,7 @@ const JDCVMatcher = () => {
   const matchResults = async () => {
     if (!editedJdJson || !cvExtractionResults) return;
     setProcessing(true);
-    setStep(6);
+    setStep(user?.role === 'recruiter' ? 5 : 6);
     const jdWithFlatSkills = {
       ...editedJdJson,
       requiredSkills: [
@@ -163,18 +246,14 @@ const JDCVMatcher = () => {
         ...skillCategories.extra
       ],
     };
-    const localApi = import.meta.env.VITE_API_URL;
-    const networkApi = import.meta.env.VITE_API_URL_NETWORK;
-    const isLocalhost = window.location.hostname === "localhost" || window.location.hostname === "127.0.0.1";
-    const apiUrl = isLocalhost ? localApi : networkApi;
     try {
-      const res = await axios.post(`${apiUrl}/match`, {
+      const res = await api.post(`/match`, {
         jd_json: jdWithFlatSkills, // Use the object with flattened skills
         cvs: cvExtractionResults
       });
       setFinalResults(res.data);
       setProcessing(false);
-      setStep(7);
+      setStep(user?.role === 'recruiter' ? 6 : 7);
     } catch (err) {
       setProcessing(false);
       alert('Error matching results: ' + (err.response?.data?.error || err.message));
@@ -192,6 +271,7 @@ const JDCVMatcher = () => {
     setFinalResults(null);
     setProcessing(false);
     setView('main');
+    setSelectedJd(null);
   };
 
   const handleUpdateCv = (index, updatedCv) => {
@@ -206,6 +286,50 @@ const JDCVMatcher = () => {
       return <PastAnalyses />;
     }
 
+    if (user?.role === 'recruiter') {
+        switch (step) {
+            case 1:
+                return <SelectJdStep jds={jds} onSelectJd={handleSelectJd} processing={processing} />;
+            case 2:
+                return (
+                    <UploadCvForJdStep
+                        jd={selectedJd}
+                        files={files.cv}
+                        dragOver={dragOver.cv}
+                        handleDrop={(e) => handleDrop(e, 'cv')}
+                        handleDragOver={(e) => handleDragOver(e, 'cv')}
+                        handleDragLeave={(e) => handleDragLeave(e, 'cv')}
+                        handleFileSelect={(e) => handleFileSelect(e, 'cv')}
+                        extractResumes={extractResumes}
+                        processing={processing}
+                    />
+                );
+            case 4: // Review resumes
+                return (
+                    <ReviewResumesStep
+                        cvExtractionResults={cvExtractionResults}
+                        setEditingCvIndex={setEditingCvIndex}
+                        matchResults={matchResults}
+                        resetApp={resetApp}
+                        processing={processing}
+                    />
+                );
+            case 6: // Results
+                return (
+                    <ResultsStep
+                        finalResults={finalResults}
+                        expandedIdx={expandedIdx}
+                        setExpandedIdx={setExpandedIdx}
+                        skillCategories={skillCategories}
+                        resetApp={resetApp}
+                    />
+                );
+            default:
+                return null;
+        }
+    }
+
+    // Admin / Backend Team Flow
     switch (step) {
       case 1:
         return (
@@ -216,6 +340,7 @@ const JDCVMatcher = () => {
             handleDragOver={handleDragOver}
             handleDragLeave={handleDragLeave}
             handleFileSelect={handleFileSelect}
+            handleRemoveFile={handleRemoveFile}
             extractJD={extractJD}
             processing={processing}
           />
@@ -234,8 +359,10 @@ const JDCVMatcher = () => {
             setNewSkill={setNewSkill}
             setShowJsonView={setShowJsonView}
             extractResumes={extractResumes}
+            saveJd={saveJd}
             resetApp={resetApp}
             processing={processing}
+            user={user}
           />
         );
       case 5:
@@ -264,41 +391,8 @@ const JDCVMatcher = () => {
   };
 
   return (
-    <div className="min-h-screen bg-gradient-to-br from-gray-50 via-white to-red-50">
-      <div className="absolute inset-0 bg-gradient-to-br from-red-500/5 via-transparent to-red-500/10"></div>
-      <header className="relative z-10 bg-white shadow-lg border-b border-red-100 sticky top-0 z-50">
-        <div className="max-w-7xl mx-auto px-6 py-4">
-          <div className="flex items-center justify-between">
-            <div className="flex items-center space-x-3">
-              <div className="p-2 bg-gradient-to-r from-red-500 to-red-600 rounded-lg shadow-lg">
-                <Brain className="w-6 h-6 text-white" />
-              </div>
-              <h1 className="text-2xl font-bold text-gray-800">JD-CV Matcher</h1>
-            </div>
-            <div className="flex items-center space-x-4">
-              <button 
-                onClick={() => setView(view === 'main' ? 'past' : 'main')}
-                className="flex items-center space-x-2 px-4 py-2 rounded-lg bg-gray-100 hover:bg-gray-200 transition-colors"
-              >
-                <Clock className="w-5 h-5 text-gray-600" />
-                <span className="text-sm font-medium text-gray-700">
-                  {view === 'main' ? 'View Past Analyses' : 'New Analysis'}
-                </span>
-              </button>
-              <div className="flex items-center space-x-1 text-gray-600 text-sm">
-                <Zap className="w-4 h-4 text-red-500" />
-                <span>AI Powered</span>
-              </div>
-              <div className="flex items-center space-x-1 text-gray-600 text-sm">
-                <Target className="w-4 h-4 text-red-500" />
-                <span>Smart Matching</span>
-              </div>
-            </div>
-          </div>
-        </div>
-      </header>
-      <main className="relative z-10 max-w-7xl mx-auto px-6 py-8">
-        {view === 'main' && <Stepper step={step} />}
+    <>
+        {view === 'main' && user?.role !== 'recruiter' && <Stepper step={step} onBack={handleBack} />}
         
         {renderContent()}
 
@@ -311,8 +405,7 @@ const JDCVMatcher = () => {
                 onCancel={() => setEditingCvIndex(null)}
             />
         )}
-      </main>
-    </div>
+    </>
   );
 };
 

@@ -1,87 +1,27 @@
-# 📄 Resume–JD AI 🔍
+# CV Automation
 
-An intelligent system that:
-- ✅ Uploads resumes (PDF or DOCX)
-- ✅ Extracts content using NLP
-- ✅ (Coming Soon) Matches resumes to job descriptions with AI
-- ✅ (Coming Soon) Generates personalized interview questions
+CV Automation is a powerful, AI-driven tool designed to revolutionize the recruitment process. It intelligently parses, analyzes, and matches candidate resumes with job descriptions, providing recruiters with actionable insights to identify the best candidates quickly.
 
-Built using **FastAPI (backend)** and **React (frontend)**.
+## Key Features
 
----
+-   **AI-Powered Parsing:** Extracts structured data from resumes and JDs (PDF, DOCX, TXT).
+-   **Intelligent Matching:** Ranks candidates with a sophisticated scoring algorithm.
+-   **Actionable Insights:** Generates job stability analysis, education gap detection, and tailored interview questions.
+-   **Role-Based Access:** Manages permissions for Admins, Recruiters, and Backend Teams.
+-   **Modern UI:** An intuitive React-based interface for a seamless user experience.
 
-## 🚀 Features
+## Documentation
 
-- Upload resumes via drag-and-drop or file picker
-- Supports `.pdf` and `.docx` formats
-- Extracts key resume content on the backend
-- Displays file metadata (name, size, type)
-- CORS-enabled for frontend integration
-- RESTful architecture ready for AI-powered matching
+For detailed information about the project, setup, API, and more, please refer to our comprehensive documentation:
 
----
+-   [**Project Overview**](./docs/project_overview.md)
+-   [**Backend Setup Guide**](./docs/backend_setup.md)
+-   [**Frontend Setup Guide**](./docs/frontend_setup.md)
+-   [**API Documentation**](./docs/api_documentation.md)
+-   [**Testing Guide**](./docs/testing.md)
 
-## 📦 Tech Stack
+## Quick Start
 
-| Layer        | Tech                          |
-|--------------|-------------------------------|
-| Frontend     | React, Axios, Tailwind CSS    |
-| Backend      | FastAPI, PyPDF2, python-docx  |
-| File Upload  | `multipart/form-data`         |
-| Language     | Python 3.11 / JavaScript      |
-
----
-
-## 📁 Project Structure
-
-```text
-📦 project-root
-├── backend/
-│   ├── main.py               # FastAPI app
-│   └── requirements.txt
-└── frontend/
-    └── src/
-        └── components/
-            └── FileUpload.jsx
-
-
----
-
-### ✅ Backend Setup
-
-```bash
-cd backend
-conda create -p venv python==3.12
-conda activate venv or conda activate ./venv
-pip install -r requirements.txt
-// uvicorn main:app --reload
-uvicorn app.main:app --reload --host 0.0.0.0 --port 8000
-
-
-**Ensure these are in requirements.txt:
-fastapi
-uvicorn
-python-multipart
-PyPDF2
-python-docx
-
-
-✅ Frontend Setup
-cd frontend
-npm install
-npm run dev
-
-Ensure Axios is installed:
-npm install axios
-🔗 API Endpoints
-Method	Endpoint	Description
-GET	/	Health check
-POST	/upload	Upload and extract file
-
-🧠 Upcoming Features
-
-Resume vs JD semantic matching (with cosine similarity) [Optional]
-
-NLP-based question generator
-
-PDF export of evaluation report
+1.  **Set up the Backend:** Follow the [Backend Setup Guide](./docs/backend_setup.md).
+2.  **Set up the Frontend:** Follow the [Frontend Setup Guide](./docs/frontend_setup.md).
+3.  Launch the application and start streamlining your recruitment workflow!
