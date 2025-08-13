@@ -4,20 +4,17 @@ This guide provides instructions for setting up and running the backend service 
 
 ## Prerequisites
 
--   [[uv](https://docs.astral.sh/uv/)] (recommended)
 -   Python 3.12 or higher
 -   An active Supabase project
 -   A Groq API key
 
-## 1. Clone the Repository
+You can use either [uv](https://docs.astral.sh/uv/) (recommended) or [conda](https://docs.conda.io/) to manage your Python environment and dependencies.
 
-If you haven't already, clone the project repository to your local machine.
+### Option 1: Using uv (Recommended)
 
-## 2. Install Dependencies
-
-
-Navigate to the `Backend` directory and install the required Python packages using `uv`.
 [[Install uv](https://docs.astral.sh/uv/getting-started/installation/)]
+
+Navigate to the `Backend` directory and install the required Python packages using `uv`:
 
 ```bash
 cd Backend
@@ -26,6 +23,26 @@ uv sync --all-extras
 
 # For production only (installs only runtime dependencies)
 uv sync
+```
+
+### Option 2: Using conda
+
+[[Install conda](https://docs.conda.io/projects/conda/en/latest/user-guide/install/)]
+
+Navigate to the `Backend` directory and create a conda environment:
+
+```bash
+cd Backend
+# Create a new conda environment with Python 3.12
+conda create -n cv-automation python=3.12
+
+# Activate the environment
+conda activate cv-automation
+
+# Install dependencies using pip (recommended approach for conda environments)
+pip install -e ".[test]"  # For development (includes test dependencies)
+# OR
+pip install -e "."        # For production only (runtime dependencies only)
 ```
 
 ## 3. Configure Environment Variables
@@ -65,7 +82,11 @@ For detailed instructions, refer to the [Supabase Setup Guide](./supabase_setup.
 After setting up the tables, you may also need to download NLTK data (not strictly required):
 
 ```bash
+# If using uv
 uv run download_nltk_data.py
+
+# If using conda
+python download_nltk_data.py
 ```
 
 ## 5. Create an Initial Admin User
@@ -73,7 +94,11 @@ uv run download_nltk_data.py
 Run the provided script to create the first admin user in your Supabase project. This user can then manage other users through the application's UI.
 
 ```bash
+# If using uv
 uv run create_admin_user.py
+
+# If using conda
+python create_admin_user.py
 ```
 
 **Note:** After creating the user, you may need to confirm their email address in the Supabase dashboard, unless you have disabled email confirmations for development (as described in the Supabase setup guide).
@@ -83,13 +108,17 @@ uv run create_admin_user.py
 Once the setup is complete, you can start the FastAPI server.
 
 ```bash
+# If using uv
 uv run uvicorn app.main:app --reload --host 0.0.0.0 --port 8000
+
+# If using conda
+uvicorn app.main:app --reload --host 0.0.0.0 --port 8000
 ```
 
 The `--reload` flag enables hot-reloading, which is useful for development.
 
 ## 7. Accessing the API
 
-With the server running, the API is available at `http://localhost:8000`.
+With the server running, the API is available at `http://localhost:8000`. (or whichever port you're running the server)
 
 Interactive API documentation (Swagger UI) can be accessed at `http://localhost:8000/docs`.
