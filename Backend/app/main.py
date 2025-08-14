@@ -58,7 +58,7 @@ def startup_event():
         return
     
     logging.info("Running startup tasks...")
-    download_nltk_data()
+    # download_nltk_data()
     logging.info("Startup tasks completed.")
 
 app.add_middleware(
