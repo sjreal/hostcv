@@ -80,6 +80,16 @@ def clean_json_response(content: str) -> str:
         return largest_json
     return content
 
+def clean_email(email: str) -> str:
+    """Clean email address by removing spaces and invalid characters."""
+    if not email:
+        return ""
+    # Remove all spaces
+    email = email.replace(" ", "")
+    # Remove any other invalid characters that might be around the email
+    email = email.strip()
+    return email
+
 def clean_resume_json(resume_json):
     achievements = resume_json.get("Achievements", [])
     if isinstance(achievements, list):
@@ -155,6 +165,10 @@ def clean_resume_json(resume_json):
 
     pd = resume_json.get("Personal Data", {})
     if isinstance(pd, dict):
+        # Clean email if present
+        if "email" in pd and pd["email"]:
+            pd["email"] = clean_email(str(pd["email"]))
+        
         loc = pd.get("location", {})
         if not isinstance(loc, dict):
             pd["location"] = {}
