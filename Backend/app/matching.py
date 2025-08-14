@@ -23,7 +23,7 @@ EDUCATION_WEIGHT = float(os.getenv('MATCHING_EDUCATION_WEIGHT', 0.23))
 LOCATION_WEIGHT = float(os.getenv('MATCHING_LOCATION_WEIGHT', 0.0))
 
 # Get model name from environment variable with default
-SENTENCE_TRANSFORMER_MODEL = os.getenv('SENTENCE_TRANSFORMER_MODEL', 'all-mpnet-base-v2')
+SENTENCE_TRANSFORMER_MODEL = os.getenv('SENTENCE_TRANSFORMER_MODEL', 'all-MiniLM-L6-v2')
 
 _model = None
 
