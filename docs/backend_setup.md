@@ -12,7 +12,7 @@ You can use either [uv](https://docs.astral.sh/uv/) (recommended) or [conda](htt
 
 ### Option 1: Using uv (Recommended)
 
-[[Install uv](https://docs.astral.sh/uv/getting-started/installation/)]
+[Install uv](https://docs.astral.sh/uv/getting-started/installation/)
 
 Navigate to the `Backend` directory and install the required Python packages using `uv`:
 
