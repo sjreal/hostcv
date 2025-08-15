@@ -251,7 +251,7 @@ class Analytics(BaseModel):
     job_stability: JobStability
     education_gap: EducationGap
     keyword_analysis: KeywordAnalysis
-    suggested_role: str
+    suggested_role: Optional[str] = "Not specified"
 
 class CVModel(BaseModel):
     UUID: Optional[str] = None
@@ -291,7 +291,7 @@ class MatchResult(BaseModel):
     disclaimer: Optional[str]
     job_stability: JobStability
     education_gap: EducationGap
-    suggested_role: str
+    suggested_role: Optional[str] = "Not specified"
     interview_questions: List[str]
     skill_presence: Dict[str, bool]
     filter_status: Dict[str, Any]

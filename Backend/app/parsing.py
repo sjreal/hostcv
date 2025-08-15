@@ -151,16 +151,72 @@ def clean_resume_json(resume_json):
     if not isinstance(analytics, dict):
         resume_json["Analytics"] = {}
     else:
+        # Clean suggested_role - ensure it's a string or None
+        if "suggested_role" in analytics:
+            suggested_role = analytics["suggested_role"]
+            if suggested_role is None or suggested_role == "":
+                analytics["suggested_role"] = "Not specified"
+            else:
+                analytics["suggested_role"] = str(suggested_role)
+        else:
+            analytics["suggested_role"] = "Not specified"
+        
+        # Clean job_stability
+        job_stability = analytics.get("job_stability", {})
+        if not isinstance(job_stability, dict):
+            analytics["job_stability"] = {}
+        else:
+            # Ensure numeric values for job stability
+            avg_duration = job_stability.get("average_duration_years")
+            if avg_duration is not None:
+                try:
+                    job_stability["average_duration_years"] = float(avg_duration)
+                except (ValueError, TypeError):
+                    job_stability["average_duration_years"] = None
+            
+            # Ensure boolean for frequent_switching_flag
+            switching_flag = job_stability.get("frequent_switching_flag")
+            job_stability["frequent_switching_flag"] = to_bool(switching_flag)
+            analytics["job_stability"] = job_stability
+        
+        # Clean education_gap
+        education_gap = analytics.get("education_gap", {})
+        if not isinstance(education_gap, dict):
+            analytics["education_gap"] = {}
+        else:
+            # Ensure numeric values for education gap
+            gap_duration = education_gap.get("gap_duration_years")
+            if gap_duration is not None:
+                try:
+                    education_gap["gap_duration_years"] = float(gap_duration)
+                except (ValueError, TypeError):
+                    education_gap["gap_duration_years"] = 0.0
+            else:
+                education_gap["gap_duration_years"] = 0.0
+            
+            # Ensure boolean for has_gap
+            has_gap = education_gap.get("has_gap")
+            education_gap["has_gap"] = to_bool(has_gap)
+            analytics["education_gap"] = education_gap
+        
+        # Clean keyword_analysis
         ka = analytics.get("keyword_analysis", {})
         if not isinstance(ka, dict):
             analytics["keyword_analysis"] = {}
         else:
+            # Ensure boolean values for keyword analysis
+            ka["teamwork"] = to_bool(ka.get("teamwork"))
+            ka["management_experience"] = to_bool(ka.get("management_experience"))
+            ka["geographic_experience"] = to_bool(ka.get("geographic_experience"))
+            
+            # Clean extracted_keywords
             ek = ka.get("extracted_keywords", [])
             if isinstance(ek, list):
                 ka["extracted_keywords"] = [str(e) for e in ek if isinstance(e, (str, int, float))]
             else:
                 ka["extracted_keywords"] = []
             analytics["keyword_analysis"] = ka
+        
         resume_json["Analytics"] = analytics
 
     pd = resume_json.get("Personal Data", {})
@@ -169,9 +225,43 @@ def clean_resume_json(resume_json):
         if "email" in pd and pd["email"]:
             pd["email"] = clean_email(str(pd["email"]))
         
+        # Clean other string fields
+        for field in ["firstName", "lastName", "linkedin", "portfolio", "gender"]:
+            if field in pd and pd[field] is not None:
+                pd[field] = str(pd[field]).strip()
+                if pd[field] == "":
+                    pd[field] = None
+        
+        # Clean age field
+        if "age" in pd and pd["age"] is not None:
+            try:
+                age = int(pd["age"])
+                if age > 0 and age < 150:  # Reasonable age range
+                    pd["age"] = age
+                else:
+                    pd["age"] = None
+            except (ValueError, TypeError):
+                pd["age"] = None
+        
+        # Clean phone field
+        if "phone" in pd and pd["phone"]:
+            pd["phone"] = str(pd["phone"]).strip()
+            if pd["phone"] == "":
+                pd["phone"] = None
+        
+        # Clean location
         loc = pd.get("location", {})
         if not isinstance(loc, dict):
             pd["location"] = {}
+        else:
+            # Clean location fields
+            for loc_field in ["city", "state", "country"]:
+                if loc_field in loc and loc[loc_field] is not None:
+                    loc[loc_field] = str(loc[loc_field]).strip()
+                    if loc[loc_field] == "":
+                        loc[loc_field] = None
+            pd["location"] = loc
+        
         resume_json["Personal Data"] = pd
     else:
         resume_json["Personal Data"] = {"location": {}}
