@@ -24,6 +24,7 @@ const LoginPage = () => {
             // Fetch user data and store it
             const userResponse = await api.get('/users/me');
             const user = userResponse.data;
+            console.log("Fetched user data:", user); // Debug log
             if (user) {
                 storage.setItem('user', JSON.stringify(user));
             }

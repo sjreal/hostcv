@@ -3,7 +3,7 @@ import { useNavigate } from 'react-router-dom';
 
 const useAuth = () => {
     const [user, setUser] = useState(null);
-    const [loading, setLoading] = useState(true); // Add loading state
+    const [loading, setLoading] = useState(true);
     const navigate = useNavigate();
 
     useEffect(() => {
@@ -19,7 +19,7 @@ const useAuth = () => {
             localStorage.removeItem('user');
             sessionStorage.removeItem('user');
         } finally {
-            setLoading(false); // Set loading to false after trying
+            setLoading(false);
         }
     }, []);
 
@@ -32,7 +32,7 @@ const useAuth = () => {
         navigate('/login');
     };
 
-    return { user, logout, loading }; // Return loading state
+    return { user, logout, loading };
 };
 
 export default useAuth;

@@ -5,6 +5,9 @@ import useAuth from '../hooks/useAuth';
 
 const MainLayout = () => {
     const { user, logout } = useAuth();
+    
+    // Debug log to see user data
+    console.log("Current user in MainLayout:", user);
 
     return (
         <div className="min-h-screen bg-gradient-to-br from-gray-50 via-white to-red-50">

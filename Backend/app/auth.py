@@ -81,6 +81,7 @@ def get_current_user(request: Request, supabase: Client = Depends(get_supabase))
     try:
         user_response = supabase.auth.get_user(token)
         user_data = user_response.user.user_metadata or {}
+        print(f"User metadata from Supabase: {user_data}")  # Debug log
         # Supabase stores user data in a different structure.
         # We need to adapt it to our Pydantic schema.
         user = schemas.User(
@@ -90,6 +91,7 @@ def get_current_user(request: Request, supabase: Client = Depends(get_supabase))
             role=user_data.get("role", "recruiter"), # Assumes you have a 'role' in user_metadata
             is_active=True # Supabase users are active by default
         )
+        print(f"User object created: {user}")  # Debug log
         return user
     except Exception as e:
         raise HTTPException(

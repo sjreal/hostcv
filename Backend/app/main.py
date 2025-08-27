@@ -6,7 +6,6 @@ import tempfile
 import shutil
 import os
 import json
-import nltk
 import secrets
 import logging
 from typing import List
@@ -32,24 +31,6 @@ ALLOWED_CONTENT_TYPES = [
 
 app = FastAPI()
 
-def download_nltk_data():
-    """Downloads the necessary NLTK data if not already present."""
-    try:
-        nltk.data.find('corpora/wordnet')
-    except LookupError:
-        logging.info("Downloading NLTK data: wordnet")
-        nltk.download('wordnet')
-    try:
-        nltk.data.find('corpora/omw-1.4')
-    except LookupError:
-        logging.info("Downloading NLTK data: omw-1.4")
-        nltk.download('omw-1.4')
-    try:
-        nltk.data.find('corpora/stopwords')
-    except LookupError:
-        logging.info("Downloading NLTK data: stopwords")
-        nltk.download('stopwords')
-
 @app.on_event("startup")
 def startup_event():
     # Skip startup event during testing
@@ -61,9 +42,10 @@ def startup_event():
     # download_nltk_data()
     logging.info("Startup tasks completed.")
 
+# Configure CORS to allow requests from Vercel
 app.add_middleware(
     CORSMiddleware,
-    allow_origins=["*"],
+    allow_origins=["*"],  # In production, you should specify the exact origins
     allow_credentials=True,
     allow_methods=["*"],
     allow_headers=["*"],
@@ -107,6 +89,7 @@ async def login_for_access_token(
 
 @app.get("/users/me", response_model=schemas.User)
 async def read_users_me(current_user: schemas.User = Depends(auth.get_current_user)):
+    print(f"Current user data being returned: {current_user}")  # Debug log
     return current_user
 
 # User routes

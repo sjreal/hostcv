@@ -5,9 +5,6 @@ import re
 import os
 from typing import Dict, List, Tuple
 from difflib import SequenceMatcher
-import nltk
-from nltk.stem import WordNetLemmatizer
-from nltk.corpus import stopwords
 from dotenv import load_dotenv
 
 from .schemas import JDModel, CVModel, Experience, Education, LocationModel, Skill, Qualifications

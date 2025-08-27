@@ -28,3 +28,7 @@ Utility scripts are available in the `scripts` directory. See the [scripts READM
 1.  **Install dependencies:** `uv sync --all-extras` (for development) or `uv sync` (for production only)
 2.  **Configure your environment:** Create a `.env` file (see the setup guide for details).
 3.  **Run the server:** `uv run uvicorn app.main:app --reload --host 0.0.0.0 --port 8000`
+
+## Deployment
+
+For deployment instructions to avoid installing heavy CUDA dependencies, please see [DEPLOYMENT.md](./DEPLOYMENT.md).

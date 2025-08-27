@@ -1,0 +1,193 @@
+Project Title: 
+AI-Based Resume and Job Description Matching System and Chatbot
+
+Project Description: 
+The aim of this project is to create a resume and job description matcher for use in Verto Bizserv Pvt. Ltd. The need is to upload multiple resumés and return a list of the most viable candidates for that position. An additional goal is to generate questions for candidates based on the particular job description uploaded. This helps to create robust candidate filtering tools and find the perfect candidate for a specified role.
+
+Outline of the Solution:
+- Extract structured data from CVs and JDs
+- Create ranking of candidates on the basis of the extracted data.
+- Display list of suitable candidates from the list of CVs
+- Question generation: Use an LLM to generate questions for candidates based on their CVs and the job description.
+
+Design of the Solution:
+1. Extract raw text (and hyperlinks) from CVs and JDs
+2. Convert this text to a structured data format (JSON) with relevant fields. (Personal Details, Education, Technologies, Languages etc.)
+3. Clean up the JSON
+4. Vectorize the data
+5. Use comparison metrics to find the highest match candidates.
+6. Return a list of these candidates with all their information.
+
+Hardware and Software Requirements:
+- Hardware: Computer with a GPU
+- Software: Frontend (React, Axios, Tailwind CSS), Backend (Python 3.11, JavaScript, uv, FastAPI, PyMuPDF, python-docx)
+
+Environment setup: 
+macOS
+
+Concepts Used:
+1. Text Extraction - Extracting all the raw text and hyperlinks from CV and Job Description.
+2. Deriving Data from Text - Feed the text into an LLM with a system prompt, to return a JSON file.
+3. Cleaning JSON - Removing extra spaces, handling backticks (```), etc.
+4. Lemmatization - Reduce words to their base form.
+5. Vectorization - Converting the JSON data into vectors.
+6. Finding Similarity - Finds the cosine of the angle between two vectors, thus taking both distance and direction into account.
+
+---
+Week 1: From 09/05/2025 to 13/05/2025
+---
+
+Day 1 Reflection:
+- Meeting with Industry Mentor Mr. Biswas
+- High-Level Structure:
+  1. Upload one CV per JD (initially) and find whether the candidate is qualified.
+  2. Generate questions for the candidate based on JD and CV. Also, HR questions are also required.
+
+Day 2 Reflection:
+- Learning about NER, and how to extract useful data from the given documents.
+
+Day 3 Reflection:
+- Team Meeting
+- Division of Work:
+  1. Frontend - Uploading JDs and CVs, displaying list of candidates.
+  2. Extracting Data - Finding out how to extract and store the data from uploaded documents in a useful format.
+  3. Question Generation - System prompt for LLM, split of questions between domain, HR, and 'skill gap' questions.
+
+Day 4 Reflection:
+- Exploring and cloning a variety of similar projects that try to achieve a similar goal.
+
+Day 5 Reflection:
+- Problems with existing projects:
+  1. Poor Text Extraction - The text is not properly extracted, misses words and no hyperlinks are extracted.
+  2. Poor Data Extraction - From the text extracted, projects are not able to extract all the data required. For Example - It may be able to get the 'name' and 'phone number' fields correct, but it is not able to get the 'education details' field.
+  3. Poor performance - Some projects are expensive to run and lag the performance of computer.
+
+---
+Week 2: From 16/06/2025 to 20/06/2025
+---
+
+Day 1 Reflection:
+- Researching lists of skills and qualifications for NER (Named Entity Recognition).
+- Complete lists are available, but are paywalled via an expensive API.
+- Public/Open-Source lists, such as those by the US Government and the European Union are not comprehensive enough and the data is not clean.
+
+Day 2 Reflection:
+- Using an LLM seems to be the best and most reliable way to extract the data. Experimented via HuggingFace Playground the extract CV data in JSON, and it seems to be mostly successful.
+
+Day 3 Reflection:
+- Constructing the CV prompt format for the JSON to feed into the LLM.
+
+Day 4 Reflection:
+- Refining the prompt for CV and constructing the JD prompt. All fields from CV such as Personal Details, Education Detail, Job Experience, Projects, Languages etc. are suitably extracted in JSON.
+
+Day 5 Reflection:
+- Meeting with Industry Mentor(s)
+  1. Need to upload multiple CV and need to find mapping for each CV to JD.
+  2. Primary Skill Identification - Which field is the person most inclined towards.
+  3. Biswas Sir will be sharing sample JDs and CVs on Monday (23-June)
+  4. Against one JD minimum 5-6 CVs will be shared (match the CV to the JD)
+
+---
+Week 3: From 23/06/2025 to 27/06/2025
+---
+
+Day 1 Reflection:
+- HuggingFace API limit reached. Installing and using ollama locally instead. Finding out which is the lowest computational cost LLM that gives us good results for JSON extraction.
+- Need:
+  1. Must have a relatively long context window as we may be feeding a lot of text into the LLM
+  2. Must be sufficiently advanced that it gives us good, clean JSON.
+
+Day 2 Reflection:
+- Chose two models that are low performance cost and give good results:
+  1. DeepSeek-R1-Distill-Qwen-1.5B
+  2. gemma3:4b
+
+Day 3 Reflection:
+- Minutes of the meeting from the last meeting:
+  - Stability in job
+  - Gap in education
+  - Keywords -team ,management experience, geographic experience,
+  - what role is this cv made for
+  - Integration of automation backend and ai ml
+
+Day 4 Reflection:
+- Refining the prompt for JDs. Testing some existing models for similarity to find a similarity score.
+
+Day 5 Reflection:
+- Need to create custom embedding, based on keywords/technologies. Then finding cosine similarity and then ranking candidates.
+
+---
+Week 4: From 30/06/2025 to 04/07/2025
+---
+
+Day 1 Reflection:
+- Began setting up the FastAPI backend structure. Created the main application file and organized the project into modules for authentication, models, and schemas.
+
+Day 2 Reflection:
+- Implemented file upload endpoints for CVs and Job Descriptions. Researched and integrated PyMuPDF for extracting text from PDF files.
+
+Day 3 Reflection:
+- Added support for .docx files using the python-docx library. Now the system can extract raw text from both major document formats.
+
+Day 4 Reflection:
+- Integrated the local Ollama LLM. Created a service that takes the extracted text and sends it to the LLM with the refined JSON prompt to get structured data.
+
+Day 5 Reflection:
+- Designed the initial database schema in models.py for Users, JDs, and CVs. Started writing the corresponding Pydantic schemas in schemas.py.
+
+---
+Week 5: From 07/07/2025 to 11/07/2025
+---
+
+Day 1 Reflection:
+- Implemented the backend logic for vectorizing the extracted JSON data. Decided to use a pre-trained model from HuggingFace for generating embeddings for now.
+
+Day 2 Reflection:
+- Developed the core matching algorithm using cosine similarity. The function now takes a JD and a list of CVs and returns a ranked list of candidates based on the similarity score.
+
+Day 3 Reflection:
+- Built out the CRUD (Create, Read, Update, Delete) operations for managing Job Descriptions in crud.py and exposed them through API endpoints.
+
+Day 4 Reflection:
+- Started scaffolding the React frontend application using Vite. Set up the basic project structure with components, pages, and API handling.
+
+Day 5 Reflection:
+- Created the initial UI components for uploading JDs and CVs using React. Implemented the API call to the backend to handle the file uploads.
+
+---
+Week 6: From 14/07/2025 to 18/07/2025
+---
+
+Day 1 Reflection:
+- Focused on implementing user authentication. Set up JWT-based authentication on the FastAPI backend in auth.py. Created login and registration endpoints.
+
+Day 2 Reflection:
+- Integrated authentication on the frontend. Created a useAuth hook to manage user state and created protected routes for the main application.
+
+Day 3 Reflection:
+- Developed the JD Management page on the frontend, allowing users to view, create, and delete job descriptions.
+
+Day 4 Reflection:
+- Built the UI to display the ranked list of candidates for a selected job description. The page now fetches the matched results from the backend and displays them.
+
+Day 5 Reflection:
+- Started writing unit and integration tests for the backend API using Pytest to ensure the reliability of the core endpoints like file upload and matching.
+
+---
+Week 7: From 21/07/2025 to 25/07/2025
+---
+
+Day 1 Reflection:
+- Began work on the question generation feature. Created a new backend service to send the CV and JD data to the LLM to generate relevant interview questions.
+
+Day 2 Reflection:
+- Refined the system prompt for question generation to categorize questions into technical, behavioral, and situational.
+
+Day 3 Reflection:
+- Integrated the question generation feature into the frontend. Added a button on the candidate results page to view the generated questions.
+
+Day 4 Reflection:
+- Conducted end-to-end testing of the entire workflow: user registration, login, JD upload, CV upload, matching, and viewing results. Fixed several bugs related to data flow and UI rendering.
+
+Day 5 Reflection:
+- Team meeting to review progress. Demoed the current state of the application. Planned for the next phase of development, including UI polishing and preparing for deployment.

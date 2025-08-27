@@ -5,3 +5,5 @@ __pycache__/
 backend.egg-info/
 .venv/
 ../__pycache__/
+*.pyc
+__pycache__
